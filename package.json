@@ -11,9 +11,9 @@
     "bin/",
     "lib/",
     "index.js",
-    "docs/content/**/*.md",
-    "docs/output/**/*.html",
-    "man"
+    "docs/content/",
+    "docs/output/",
+    "man/"
   ],
   "keywords": [
     "install",
@@ -59,6 +59,7 @@
     "@npmcli/arborist": "^6.0.0",
     "@npmcli/ci-detect": "^3.0.0",
     "@npmcli/config": "^6.0.1",
+    "@npmcli/fs": "^3.0.0",
     "@npmcli/map-workspaces": "^3.0.0",
     "@npmcli/package-json": "^3.0.0",
     "@npmcli/run-script": "^5.0.0",
@@ -131,6 +132,7 @@
     "@npmcli/arborist",
     "@npmcli/ci-detect",
     "@npmcli/config",
+    "@npmcli/fs",
     "@npmcli/map-workspaces",
     "@npmcli/package-json",
     "@npmcli/run-script",
@@ -213,7 +215,7 @@
   "scripts": {
     "dependencies": "node scripts/bundle-and-gitignore-deps.js && node scripts/dependency-graph.js",
     "dumpconf": "env | grep npm | sort | uniq",
-    "authors": "bash scripts/update-authors.sh",
+    "authors": "node scripts/update-authors.js",
     "licenses": "licensee --production --errors-only",
     "test": "tap",
     "test-all": "node . run test -ws -iwr --if-present",
@@ -227,7 +229,7 @@
     "lintfix": "node . run lint -- --fix",
     "lint-all": "node . run lint -ws -iwr --if-present",
     "prelint": "rimraf test/npm_cache*",
-    "resetdeps": "bash scripts/resetdeps.sh",
+    "resetdeps": "node scripts/resetdeps.js",
     "rp-pull-request": "node . run authors",
     "postlint": "template-oss-check",
     "template-oss-apply": "template-oss-apply --force"

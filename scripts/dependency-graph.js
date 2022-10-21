@@ -1,22 +1,19 @@
-#!/usr/bin/env node
-
 'use strict'
 
 // Generates our dependency graph documents in DEPENDENCIES.md.
 
 const Arborist = require('@npmcli/arborist')
-const mapWorkspaces = require('@npmcli/map-workspaces')
-const fs = require('fs')
+const { readFileSync } = require('fs')
+const { join } = require('path')
 const log = require('proc-log')
+const { run, CWD, pkg, fs } = require('./util.js')
 
-if (process.argv.includes('--debug')) {
-  process.on('log', console.error)
-}
+const REPOS = join(CWD, 'scripts', 'npm-cli-repos.txt')
+const DEPENDENCIES = join(CWD, 'DEPENDENCIES.md')
 
 // To re-create npm-cli-repos.txt run:
-/* eslint-disable-next-line max-len */
-// npx --package=@npmcli/stafftools@latest gh repos --json | json -a name | sort > scripts/npm-cli-repos.txt
-const repos = fs.readFileSync('./scripts/npm-cli-repos.txt', 'utf8').trim().split('\n')
+// npx -p @npmcli/stafftools gh repos --json | json -a name | sort > scripts/npm-cli-repos.txt
+const repos = readFileSync(REPOS, 'utf-8').trim().split('\n')
 
 // these have a different package name than the repo name, and are ours.
 const aliases = {
@@ -85,18 +82,14 @@ function stripName (name) {
 
 const main = async function () {
   // add all of the cli's public workspaces as package names
-  const workspaces = await mapWorkspaces({ pkg: require('../package.json') })
-  for (const [key, value] of workspaces.entries()) {
-    if (!require(value + '/package.json').private) {
-      repos.push(key)
+  for (const { name, pkg: ws } of await pkg.mapWorkspaces()) {
+    if (!ws.private) {
+      repos.push(name)
     }
   }
 
-  const arborist = new Arborist({
-    prefix: process.cwd(),
-    path: process.cwd(),
-  })
-  const tree = await arborist.loadVirtual({ path: process.cwd(), name: 'npm' })
+  const arborist = new Arborist({ prefix: CWD, path: CWD })
+  const tree = await arborist.loadVirtual({ path: CWD, name: 'npm' })
   tree.name = 'npm'
 
   const [annotationsOurs, heirarchyOurs] = walk(tree, true)
@@ -125,8 +118,8 @@ const main = async function () {
     '',
     ` - ${heirarchyOurs.reverse().join('\n - ')}`,
   ]
-  fs.writeFileSync('DEPENDENCIES.md', out.join('\n'))
-  console.log('wrote to DEPENDENCIES.md')
+
+  return fs.writeFile(DEPENDENCIES, out.join('\n'))
 }
 
 const walk = function (tree, onlyOurs) {
@@ -179,6 +172,7 @@ const walk = function (tree, onlyOurs) {
 
   return [annotations, heirarchy]
 }
+
 const iterate = function (node, dependedBy, annotations, onlyOurs) {
   if (!dependedBy[node.packageName]) {
     dependedBy[node.packageName] = new Set()
@@ -198,9 +192,4 @@ const iterate = function (node, dependedBy, annotations, onlyOurs) {
   }
 }
 
-main().then(() => {
-  return process.exit(0)
-}).catch(err => {
-  console.error(err)
-  return process.exit(1)
-})
+run(main)

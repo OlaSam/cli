@@ -12,7 +12,9 @@
     "snap": "tap",
     "test": "tap",
     "posttest": "node .. run lint",
-    "build": "node bin/build.js"
+    "build": "node bin/build.js",
+    "pretest": "node ../scripts/rebuild.js cmark-gfm",
+    "prebuild": "node ../scripts/rebuild.js cmark-gfm"
   },
   "repository": {
     "type": "git",
